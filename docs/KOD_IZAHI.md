@@ -331,7 +331,7 @@ def handle(message: str, role: str = "customer_bot", user_id: str = "user_1", ch
 
 ```python
 def violates_secret_rule(text: str) -> bool:
-    """Cavab müştəridən sirr (PIN/CVV/SMS kod/kartın tam nömrəsi) İSTƏYİRMİ?"""
+    """Cavab müştəridən məxfi məlumat (PIN, CVV, SMS kod, kartın tam nömrəsi) istəyirmi?"""
     for raw in _sentences(text):
         sentence = _drop_bare_conditionals(_PARTIAL.sub("", _norm(raw)))
         for clause in _CLAUSE_BREAK.split(sentence):       # "…başqasına verməyin, amma mənə göndərin"

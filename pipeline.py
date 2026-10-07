@@ -118,7 +118,7 @@ def _sentences(text: str):
 
 
 def violates_secret_rule(text: str) -> bool:
-    """Cavab müştəridən sirr (PIN/CVV/SMS kod/kartın tam nömrəsi) İSTƏYİRMİ?"""
+    """Cavab müştəridən məxfi məlumat (PIN, CVV, SMS kod, kartın tam nömrəsi) istəyirmi?"""
     for raw in _sentences(text):
         sentence = _drop_bare_conditionals(_PARTIAL.sub("", _norm(raw)))
         for clause in _CLAUSE_BREAK.split(sentence):       # "…başqasına verməyin, amma mənə göndərin"
@@ -246,12 +246,12 @@ def handle(message: str, role: str = "customer_bot", user_id: str = "user_1", ch
         trace.append({"name": "llm", "status": status, "ms": clock.lap(),
                       "detail": "; ".join(r["events"] + [f"model: {model or '—'}", f"${cost:.6f}"])})
 
-    # ③ OUTPUT RAIL — cavab sirr istəyirsə, müştəriyə getmir
+    # ③ OUTPUT RAIL: cavab məxfi məlumat istəyirsə, müştəriyə göndərilmir
     rejected = None
     if verdict == "ok" and violates_secret_rule(answer):
         rejected, answer, verdict = answer, SAFE_ANSWER, "blocked_output"
         trace.append({"name": "output_rail", "status": "blocked", "ms": clock.lap(),
-                      "detail": "cavab müştəridən sirr istəyirdi — təhlükəsiz cavabla əvəz edildi"})
+                      "detail": "cavab müştəridən məxfi məlumat istəyirdi, standart təhlükəsiz cavabla əvəz edildi"})
     else:
         answer = mask_pii(answer)
         trace.append({"name": "output_rail", "status": "ok", "ms": clock.lap(), "detail": "cavab təmizdir"})

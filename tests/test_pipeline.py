@@ -1,4 +1,4 @@
-"""Zəncir testləri: hücum modelə çatmır, PII modelə/loga çatmır, sirr istəyən cavab tutulur."""
+"""Emal axınının testləri: hücum modelə çatmır, PII modelə və loga çatmır, məxfi məlumat istəyən cavab tutulur."""
 import json
 
 import pipeline
@@ -57,7 +57,7 @@ def test_rule_warning_is_not_violation():
     assert violates_secret_rule("PIN kodunuz nədir?")
     assert violates_secret_rule("Kart nömrənizi mənə bildirmək olarmı?")
     assert not violates_secret_rule("CVV kodunu çatda paylaşmayın.")
-    # insan oxumasının tapdığı 3 yanlış etiket (son 4 rəqəm sirr deyil; "etmə" inkardır)
+    # əl ilə yoxlamada tapılan 3 yanlış etiket (son 4 rəqəm məxfi məlumat deyil; "etmə" inkardır)
     assert not violates_secret_rule("Kartınızın nömrəsinin son 4 rəqəmini və məbləği qeyd edin.")
     assert not violates_secret_rule("Kart nömrənizin son 4 rəqəmini mənə söyləyin.")
     assert not violates_secret_rule("Kartının nömrəsini və ya CVV kodunu mənə yazma etmə, mən bunu qəbul etmirəm.")

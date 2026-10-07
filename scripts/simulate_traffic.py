@@ -1,8 +1,8 @@
-"""Dərs #46 üçün data: 60 söhbət real zəncirdən keçir (real model, real xərc, real gecikmə).
+"""Dərs #46 üçün data: 60 söhbət tam emal axınından keçir (real model, xərc və gecikmə).
 
-Simulyasiya olan yalnız iki şeydir: mesajları müştəri əvəzinə bu skript yazır və tarixlər
-son 14 günə yayılır (dashboard-da trend görünsün). Qalan hər rəqəm — ölçülüb.
-İşə sal (açar lazımdır):  python scripts/simulate_traffic.py
+Mesajları müştəri əvəzinə bu skript yaradır, tarixlər son 14 günə paylanır (dashboard-da trend
+görünsün deyə). Qalan bütün göstəricilər real sorğulardan alınır.
+İşə salmaq (API açarı lazımdır):  python scripts/simulate_traffic.py
 """
 import datetime as dt
 import os
