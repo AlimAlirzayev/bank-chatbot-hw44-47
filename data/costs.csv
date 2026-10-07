@@ -1,0 +1,5 @@
+tarix,model,input_tokens,output_tokens,cost_usd
+2026-10-07T15:43:59,openai/gpt-oss-120b,190,101,0.00008910
+2026-10-07T15:44:00,openai/gpt-oss-120b,189,113,0.00009615
+2026-10-07T15:44:00,openai/gpt-oss-120b,194,134,0.00010950
+2026-10-07T15:44:01,openai/gpt-oss-120b,193,63,0.00006675

@@ -1,0 +1,268 @@
+{
+ "_about": "Kodun izahının mənbəyi. Sətir aralıqlarını demo/tour.py ast ilə tapır, kod dəyişəndə izah sürüşmür. docs/KOD_IZAHI.md bu fayldan yaranır: python -m demo.tour",
+ "files": [
+  {
+   "path": "security_gate.py",
+   "lesson": "#44",
+   "summary": "Giriş yoxlaması: şəxsi məlumatın maskalanması, prompt injection aşkarlanması, rollara görə icazə, istifadəçi məlumatının izolyasiyası."
+  },
+  {
+   "path": "llm_service.py",
+   "lesson": "#45",
+   "summary": "LLM sorğusu: timeout, retry, fallback model, xərc qeydiyyatı, cache."
+  },
+  {
+   "path": "pipeline.py",
+   "lesson": "#44–#47",
+   "summary": "Sorğunun emalı beş mərhələdə: giriş yoxlaması, LLM sorğusu, çıxış yoxlaması, loglama, DPO datası."
+  },
+  {
+   "path": "demo/app.py",
+   "lesson": "demo",
+   "summary": "FastAPI tətbiqi: demo səhifəsi, /api/ask, /api/stats və kodun izahı üçün endpoint-lər."
+  },
+  {
+   "path": "scripts/harvest_preferences.py",
+   "lesson": "#47",
+   "summary": "Red teaming ilə 15 DPO cütlüyünün toplanması və kodla yoxlanması."
+  },
+  {
+   "path": "scripts/simulate_traffic.py",
+   "lesson": "#46",
+   "summary": "60 söhbəti tam emal axınından keçirib bot_log.csv faylını yaradır."
+  },
+  {
+   "path": "tests/test_llm_service.py",
+   "lesson": "#45",
+   "summary": "LLM xidmətinin testləri saxta LLM funksiyası ilə: cache, xərc, retry, fallback."
+  },
+  {
+   "path": "tests/test_hardening.py",
+   "lesson": "#44–#47",
+   "summary": "Müstəqil testdə tapılan xətalar üçün reqressiya testləri."
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "lesson": "#45",
+   "summary": "Hər push-da GitHub Actions pytest işlədir."
+  }
+ ],
+ "stops": [
+  {
+   "id": "pii",
+   "file": "security_gate.py",
+   "anchor": {
+    "func": "mask_pii"
+   },
+   "also": {
+    "marker": "# Sıra vacibdir",
+    "until": "def mask_pii"
+   },
+   "lesson": "#44 · NVIDIA: input rails",
+   "title": "PII maskalanması",
+   "what": "Kart nömrəsi (15–19 rəqəm), telefon (+994, 050, 994…) və e-poçt [CARD], [PHONE], [EMAIL] ilə əvəz olunur. Model, cache və log yalnız maskalanmış mətni alır.",
+   "why": "Əvvəl kart, sonra telefon yoxlanır, əks halda kart nömrəsinin bir hissəsi telefon kimi tanına bilər. Regex-lərdə təkrar sayı məhduddur ({1,64}). Məhdudiyyətsiz '+' uzun mətndə kvadratik vaxt aparır (ReDoS): testdə 40 KB-lıq mesaj servisi 5 saniyə dayandırırdı.",
+   "short": "Şəxsi məlumat modelə göndərilməzdən əvvəl regex ilə maskalanır. Regex-lər uzun mətndə də xətti vaxtda işləyir."
+  },
+  {
+   "id": "injection",
+   "file": "security_gate.py",
+   "anchor": {
+    "func": "detect_injection"
+   },
+   "also": {
+    "assign": "INJECTION_PATTERNS"
+   },
+   "lesson": "#44 · NVIDIA: input rails",
+   "title": "Prompt injection aşkarlanması",
+   "what": "Mətn normallaşdırılır (kiçik hərf, ı→i, artıq boşluqlar silinir) və AZ, EN, RU şablonları ilə yoxlanır.",
+   "why": "Yalnız əmr forması tutulur: 'Ödəniş göstərişini ləğv etmək istəyirəm' adi bank sorğusudur. Regex pulsuz və sürətlidir. Regex-in buraxdığı halları ikinci qat olaraq Llama Prompt Guard modeli yoxlayır.",
+   "short": "İlk qat regex, ikinci qat ML klassifikatordur. Regex yeni ifadələrdə zəifdir, ona görə sonrakı yoxlamalar da var."
+  },
+  {
+   "id": "permissions",
+   "file": "security_gate.py",
+   "anchor": {
+    "func": "execute_tool"
+   },
+   "also": {
+    "assign": "ROLE_LEVELS"
+   },
+   "lesson": "#44",
+   "title": "Rollara görə icazə (default deny)",
+   "what": "Hər alətin səviyyəsi var (read, write, destructive), hər rolun icazələri var. Naməlum alət və ya rol rədd olunur. Destructive alət istifadəçi təsdiqi ('b') tələb edir.",
+   "why": "confirm parametri susmaya görə input() funksiyasıdır. Testdə və demoda başqa funksiya ötürülür (dependency injection).",
+   "short": "Siyahıda olmayan alət işləmir. Geri qaytarılmayan əməliyyat təsdiqsiz icra olunmur."
+  },
+  {
+   "id": "closure",
+   "file": "security_gate.py",
+   "anchor": {
+    "func": "make_tools_for_user"
+   },
+   "lesson": "#44",
+   "title": "İstifadəçi məlumatının izolyasiyası",
+   "what": "get_my_balance() parametr qəbul etmir. user_id closure daxilində sabitlənib.",
+   "why": "Model alətə başqa user_id ötürə bilmir, ona görə başqa müştərinin balansını ala bilməz. Testdə regex-dən keçən hücumda da alət yalnız cari istifadəçinin balansını qaytardı.",
+   "short": "İstifadəçi identifikatoru parametr kimi yox, closure ilə ötürülür, model onu dəyişə bilmir."
+  },
+  {
+   "id": "client",
+   "file": "llm_service.py",
+   "anchor": {
+    "func": "_client"
+   },
+   "also": {
+    "func": "make_llm_call"
+   },
+   "lesson": "#45",
+   "title": "LLM klienti: timeout=15, max_retries=0, max_tokens=200",
+   "what": "Groq API-yə OpenAI SDK ilə qoşulur. SDK-nın daxili retry-ı söndürülüb, retry məntiqi kodda idarə olunur. qwen üçün reasoning_effort='none' verilir ki, reasoning tokenləri 200 limitini doldurmasın.",
+   "why": "Testdə gpt-oss-20b 200 tokendə kəsildi və mövcud olmayan bank nömrələri yazdı, ona görə istifadə olunmur.",
+   "short": "Sorğu 15 saniyədən çox gözləmir, təkrar cəhdləri SDK yox, tətbiqin kodu idarə edir."
+  },
+  {
+   "id": "retry",
+   "file": "llm_service.py",
+   "anchor": {
+    "func": "_try_model"
+   },
+   "also": {
+    "assign": "RETRYABLE"
+   },
+   "lesson": "#45 · NVIDIA: run and maintain",
+   "title": "Retry və exponential backoff",
+   "what": "Yalnız müvəqqəti xətalarda (429, timeout) 3 cəhd edilir: 1 s, sonra 2 s gözləmə ilə. 401 və 400 kimi xətalar təkrarlanmır.",
+   "why": "Daimi xətanı təkrarlamaq vaxt və xərc artırır. Test time.sleep-i əvəz edir və gözləmələrin [1.0, 2.0] olduğunu yoxlayır.",
+   "short": "Müvəqqəti xətada artan fasilə ilə üç cəhd edilir, daimi xətada dərhal fallback modelə keçilir."
+  },
+  {
+   "id": "ask",
+   "file": "llm_service.py",
+   "anchor": {
+    "func": "ask_detailed"
+   },
+   "lesson": "#45",
+   "title": "Cache, əsas model, fallback, xəta mesajı",
+   "what": "Təkrar sual cache-dən qaytarılır, LLM çağırılmır. Sonra gpt-oss-120b, alınmasa qwen istifadə olunur. Hər ikisi əlçatmaz olduqda istifadəçi nəzakətli xəta mesajı alır, exception yaranmır.",
+   "why": "Fallback model başqa model ailəsindəndir, eyni vaxtda əlçatmaz olma ehtimalı azdır. 60 söhbətdə cache 21 sorğunu LLM çağırmadan cavablandırdı.",
+   "short": "LLM xətası istifadəçiyə exception kimi çatmır, həmişə cavab qaytarılır."
+  },
+  {
+   "id": "cost",
+   "file": "llm_service.py",
+   "anchor": {
+    "func": "calc_cost"
+   },
+   "also": {
+    "assign": "PRICES"
+   },
+   "lesson": "#45 · #46",
+   "title": "Xərcin hesablanması və costs.csv",
+   "what": "Groq-un rəsmi qiymətləri (USD / 1M token) PRICES lüğətindədir. Hər uğurlu sorğu costs.csv-yə bir sətir yazır.",
+   "why": "qwen çıxış tokeni $4.00, gpt-oss-120b $0.60-dır. Dashboard-da qwen 9 söhbətdə ümumi xərcin 76%-ni təşkil edir.",
+   "short": "Hər sorğunun xərci hesablanır və qeyd olunur. Model seçimi bu məlumata əsaslanır."
+  },
+  {
+   "id": "handle",
+   "file": "pipeline.py",
+   "anchor": {
+    "func": "handle"
+   },
+   "lesson": "#44–#47 · NVIDIA: observability",
+   "title": "handle(): beş emal mərhələsi",
+   "what": "Mesaj ardıcıl olaraq gate, llm, output_rail, log və harvest mərhələlərindən keçir. Hər mərhələ trace-ə {name, status, ms, detail} yazır, demo səhifəsi bu məlumatı göstərir.",
+   "why": "Trace hər mərhələnin müddətini və nəticəsini göstərir (observability). Log yazıla bilməsə də istifadəçi cavab alır.",
+   "short": "Bir funksiya beş mərhələni icra edir, hər mərhələnin nəticəsi və müddəti trace-də qeyd olunur."
+  },
+  {
+   "id": "rail",
+   "file": "pipeline.py",
+   "anchor": {
+    "func": "violates_secret_rule"
+   },
+   "also": {
+    "func": "_sentences"
+   },
+   "lesson": "#44 · #47 · NVIDIA: output rails",
+   "title": "Çıxış yoxlaması: məxfi məlumat tələbi",
+   "what": "Cümlədə məxfi məlumat sözü (PIN, CVV, SMS kod, kartın tam nömrəsi) və sorğu feli (göndərin, yazın, nədir?) varsa və fel inkar formada deyilsə, cavab pozuntu sayılır.",
+   "why": "Xəbərdarlıq ('PIN-i heç kimə deməyin') pozuntu deyil. Siyahı yalnız başlıq sorğu olduqda birləşdirilir. Yoxlama leksikdir: held-out dəstdə təxminən 75–80% tutur.",
+   "short": "Modelin cavabının istifadəçiyə göndərilib-göndərilməməsinə qayda əsasında kod qərar verir."
+  },
+  {
+   "id": "harvest",
+   "file": "pipeline.py",
+   "anchor": {
+    "marker": "# ⑤ HARVEST",
+    "until": "return {"
+   },
+   "lesson": "#47 · red teaming",
+   "title": "DPO datasının toplanması",
+   "what": "Çıxış yoxlaması pozuntu tapanda: rejected = modelin cavabı, chosen = təhlükəsiz cavab, prompt = maskalanmış mesaj.",
+   "why": "Cütlük yalnız uzunluq nisbəti 0.6–1.6 aralığında olduqda saxlanılır. Əks halda DPO cavabın uzunluğunu keyfiyyət əlaməti kimi öyrənə bilər.",
+   "short": "Çıxış yoxlamasında tutulan cavablar DPO üçün preference cütlüyünə çevrilir."
+  },
+  {
+   "id": "log",
+   "file": "pipeline.py",
+   "anchor": {
+    "marker": "# ④ LOG",
+    "until": "# ⑤ HARVEST"
+   },
+   "lesson": "#46 · NVIDIA: audit trail",
+   "title": "Loglama: bot_log.csv",
+   "what": "Hər söhbət bir sətirdir: kanal, mövzu, model, token, xərc, gecikmə, resolved, gate_verdict.",
+   "why": "gate_verdict dərsdəki altı qatlı metrika çərçivəsində çatışmayan təhlükəsizlik qatıdır. Power BI dashboard bu fayldan qurulur.",
+   "short": "Loga təhlükəsizlik sahəsi əlavə olunub: hansı kanaldan neçə hücum gəldiyi görünür."
+  },
+  {
+   "id": "redteam",
+   "file": "scripts/harvest_preferences.py",
+   "anchor": {
+    "func": "main"
+   },
+   "lesson": "#47",
+   "title": "Red teaming və avtomatik yoxlama",
+   "what": "rejected cavab qwen modeli və qəsdən təhlükəsiz olmayan system prompt ilə, chosen cavab gpt-oss-120b və əsas system prompt ilə alınır. Kod yoxlayır: rejected məxfi məlumat istəyir, chosen istəmir, uzunluq nisbəti normadadır.",
+   "why": "Testdə gpt-oss-120b təhlükəsiz olmayan promptu 5 cəhddən 5-də rədd etdi, qwen isə təxminən hər 3 cəhddən 1-də CVV istədi. Dataset qwen kimi modellərin bu davranışı öyrənməsi üçündür.",
+   "short": "Etiketləri model yox, kod təyin edir. 15 cütlüyün hamısı əl ilə də yoxlanılıb."
+  },
+  {
+   "id": "test_retry",
+   "file": "tests/test_llm_service.py",
+   "anchor": {
+    "func": "test_retry_three_times_then_fallback"
+   },
+   "lesson": "#45",
+   "title": "Test: saxta LLM ilə retry",
+   "what": "Əsas model həmişə 429 qaytarır. Test 3 cəhdi, [1.0, 2.0] gözləmələrini və fallback modelə keçidi yoxlayır.",
+   "why": "API açarı və internet tələb olunmur, ona görə test GitHub CI-da da işləyir.",
+   "short": "Testlər saxta LLM ilə işləyir, CI API açarı olmadan keçir."
+  },
+  {
+   "id": "test_limits",
+   "file": "tests/test_hardening.py",
+   "anchor": {
+    "func": "test_documented_limits_are_true"
+   },
+   "lesson": "test",
+   "title": "Test: sənədləşdirilmiş məhdudiyyətlər",
+   "what": "README-də göstərilən buraxılan cümlələrin həqiqətən buraxıldığını, yanlış həyəcan cümlələrinin isə həqiqətən tutulduğunu yoxlayır.",
+   "why": "Kod dəyişib bu hallardan birini düzəltsə, test uğursuz olur və sənəd yenilənməlidir.",
+   "short": "Məhdudiyyətlər də testlə yoxlanılır ki, sənəd kodla uyğun qalsın."
+  },
+  {
+   "id": "ci",
+   "file": ".github/workflows/ci.yml",
+   "anchor": {
+    "file": true
+   },
+   "lesson": "#45",
+   "title": "CI: hər push-da pytest",
+   "what": "GitHub Actions Python 3.12 qurur, requirements-ci.txt paketlərini yükləyir və pytest işlədir.",
+   "why": "API açarı repoda yoxdur (.env .gitignore-dadır), testlər saxta LLM ilə işləyir.",
+   "short": "Hər push-da testlər avtomatik işləyir."
+  }
+ ]
+}
